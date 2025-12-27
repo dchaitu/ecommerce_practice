@@ -10,12 +10,22 @@ class Brand(models.Model):
     def __str__(self):
         return self.name
 
-class ProductManager(models.Manager):
+class ProductQuerySet(models.QuerySet):
     def filter_by_gender(self, gender):
         return self.filter(gender=gender)
     
     def price_range(self, min_price, max_price):
         return self.filter(price__gte=min_price, price__lte=max_price)
+
+class ProductManager(models.Manager):
+    def get_queryset(self):
+        return ProductQuerySet(self.model, using=self._db)
+
+    def filter_by_gender(self, gender):
+        return self.get_queryset().filter_by_gender(gender)
+    
+    def price_range(self, min_price, max_price):
+        return self.get_queryset().price_range(min_price, max_price)
 
 class Product(models.Model):
     CATEGORY_CHOICES = [
@@ -49,6 +59,10 @@ class Product(models.Model):
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def total_value(self):
+        return sum(item.product.price * item.quantity for item in self.items.all())
 
     def __str__(self):
         return f"Cart of {self.user.username}"
