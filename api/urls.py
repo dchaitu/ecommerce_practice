@@ -7,6 +7,7 @@ from .views import (
     CartView,
     CreateOrderAPIView,
     VerifyPaymentAPIView,
+    TestPaymentPage,
 )
 
 urlpatterns = [
@@ -17,5 +18,6 @@ urlpatterns = [
     path('cart/', CartView.as_view(), name='cart'),
     path('payment-create/', CreateOrderAPIView.as_view(), name='payment-create'),
     path('payment-verify/', VerifyPaymentAPIView.as_view(), name='payment-verify'),
+    path('payment-test/', TestPaymentPage.as_view(), name='payment-test'),
 ]
 

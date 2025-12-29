@@ -2,7 +2,7 @@ from rest_framework import generics, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.conf import settings
 from .models import Brand, Product, Cart, CartItem, Order, OrderItem
 from .serializers import BrandSerializer, ProductSerializer, CartSerializer, CartItemSerializer
@@ -178,3 +178,56 @@ class VerifyPaymentAPIView(APIView):
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class TestPaymentPage(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        if not cart.items.exists():
+             return Response("Cart is empty - please add items first", status=400)
+        
+        total_amount = cart.total_value
+        amount_in_paise = int(total_amount * 100)
+        
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        payment_data = {
+            "amount": amount_in_paise,
+            "currency": "INR",
+            "receipt": f"order_rcptid_{request.user.id}",
+            "payment_capture": 1
+        }
+        
+        try:
+            razorpay_order = client.order.create(data=payment_data)
+        except Exception as e:
+             return Response(str(e), status=500)
+
+        # Create local Order
+        order = Order.objects.create(
+            user=request.user,
+            total_amount=total_amount,
+            razorpay_order_id=razorpay_order['id'],
+            is_paid=False
+        )
+        
+        for item in cart.items.all():
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
+
+        context = {
+            "key": settings.RAZORPAY_KEY_ID,
+            "amount": amount_in_paise,
+            "currency": "INR",
+            "name": "Ecommerce Practice",
+            "order_id": razorpay_order['id'],
+            "prefill": {
+                "name": request.user.username,
+                "email": request.user.email
+            }
+        }
+        return render(request, 'payment.html', context)
