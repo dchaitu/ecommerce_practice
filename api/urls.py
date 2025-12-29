@@ -5,6 +5,8 @@ from .views import (
     ProductListCreate,
     ProductRetrieveUpdateDestroy,
     CartView,
+    CreateOrderAPIView,
+    VerifyPaymentAPIView,
 )
 
 urlpatterns = [
@@ -13,5 +15,7 @@ urlpatterns = [
     path('products/', ProductListCreate.as_view(), name='product-list-create'),
     path('products/<int:pk>/', ProductRetrieveUpdateDestroy.as_view(), name='product-retrieve-update-destroy'),
     path('cart/', CartView.as_view(), name='cart'),
+    path('payment-create/', CreateOrderAPIView.as_view(), name='payment-create'),
+    path('payment-verify/', VerifyPaymentAPIView.as_view(), name='payment-verify'),
 ]
 

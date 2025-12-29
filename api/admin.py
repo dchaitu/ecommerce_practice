@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db.models import Q
 from api.models import Product, Brand, User, CartItem, Cart
+from .models import Order, OrderItem
 
 
 class PriceRangeFilter(admin.SimpleListFilter):
@@ -37,3 +38,5 @@ admin.site.register(Brand)
 admin.site.register(User)
 admin.site.register(Cart)
 admin.site.register(CartItem)
+admin.site.register(Order)
+admin.site.register(OrderItem)
