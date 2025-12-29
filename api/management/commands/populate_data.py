@@ -34,7 +34,7 @@ class Command(BaseCommand):
             Product.objects.create(
                 name=f"{brand.name} {name_base} {i}",
                 description=f"{desc_base} for {gender}",
-                price=price_base + random.randint(-10, 10),
+                price=price_base + random.randint(0, 10),
                 brand=brand,
                 category=category,
                 gender=gender

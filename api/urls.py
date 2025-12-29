@@ -8,6 +8,7 @@ from .views import (
     CreateOrderAPIView,
     VerifyPaymentAPIView,
     TestPaymentPage,
+    OrderDetailsView,
 )
 
 urlpatterns = [
@@ -19,5 +20,6 @@ urlpatterns = [
     path('payment-create/', CreateOrderAPIView.as_view(), name='payment-create'),
     path('payment-verify/', VerifyPaymentAPIView.as_view(), name='payment-verify'),
     path('payment-test/', TestPaymentPage.as_view(), name='payment-test'),
+    path('order/razorpay/<str:razorpay_order_id>/', OrderDetailsView.as_view(), name='order-details-razorpay'),
 ]
 

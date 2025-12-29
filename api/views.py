@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404, render
 from django.conf import settings
 from .models import Brand, Product, Cart, CartItem, Order, OrderItem
-from .serializers import BrandSerializer, ProductSerializer, CartSerializer, CartItemSerializer
+from .serializers import BrandSerializer, ProductSerializer, CartSerializer, CartItemSerializer, OrderSerializer
 import razorpay
 
 class BrandListCreate(generics.ListCreateAPIView):
@@ -86,6 +86,7 @@ class CreateOrderAPIView(APIView):
     def post(self, request):
         # Calculate amount from user's cart
         cart, _ = Cart.objects.get_or_create(user=request.user)
+        print(f"request data {request.__dict__}")
         if not cart.items.exists():
             return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -228,6 +229,14 @@ class TestPaymentPage(APIView):
             "prefill": {
                 "name": request.user.username,
                 "email": request.user.email
-            }
+            },
+            "amount_in_rupees": f"{(amount_in_paise/100):.2f}"
         }
         return render(request, 'payment.html', context)
+
+class OrderDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, razorpay_order_id):
+        order = get_object_or_404(Order, razorpay_order_id=razorpay_order_id)
+        serializer = OrderSerializer(order)
+        return Response(serializer.data)

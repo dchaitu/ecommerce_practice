@@ -7,8 +7,10 @@
 </head>
 <body>
     <h2>Razorpay Payment Test</h2>
+    <h3>Name: {{ prefill.name }}</h3>
+    <p>Email: {{ prefill.email }}</p>
     <p>Order ID: {{ order_id }}</p>
-    <p>Amount: {{ amount }}</p>
+    <p>Amount: {{ amount_in_rupees }}</p>
     <button id="rzp-button1">Pay</button>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

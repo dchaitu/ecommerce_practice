@@ -43,10 +43,16 @@ class CartItemAdmin(admin.ModelAdmin):
         return obj.quantity * obj.product.price
     total_price.short_description = 'Total Price'
 
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('product','order__user', 'price', 'quantity', 'order__created_at')
+    # list_filter = ('user', 'created_at')
+    search_fields = ('order__user__username', 'order__user__email')
+    list_per_page = 25
+
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Brand)
 admin.site.register(User)
 admin.site.register(Cart, CartAdmin)
 admin.site.register(CartItem, CartItemAdmin)
 admin.site.register(Order)
-admin.site.register(OrderItem)
+admin.site.register(OrderItem, OrderAdmin)
