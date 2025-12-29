@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from .models import Brand, Product, Cart, CartItem, Order
+from .models import Brand, Product, Cart, CartItem, Order, OrderItem
 from .serializers import BrandSerializer, ProductSerializer, CartSerializer, CartItemSerializer
 import razorpay
 
@@ -116,6 +116,15 @@ class CreateOrderAPIView(APIView):
             razorpay_order_id=razorpay_order['id'],
             is_paid=False
         )
+
+        # Create OrderItems from CartItems
+        for item in cart.items.all():
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price  # Snapshot the current price
+            )
         
         # Return data to frontend
         return Response({
