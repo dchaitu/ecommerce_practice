@@ -20,7 +20,7 @@ class ProductListCreate(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['price']
+    ordering_fields = ['price','brand']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -119,13 +119,16 @@ class CreateOrderAPIView(APIView):
         )
 
         # Create OrderItems from CartItems
-        for item in cart.items.all():
-            OrderItem.objects.create(
+        order_items = [
+            OrderItem(
                 order=order,
                 product=item.product,
                 quantity=item.quantity,
                 price=item.product.price  # Snapshot the current price
             )
+            for item in cart.items.all()
+        ]
+        OrderItem.objects.bulk_create(order_items)
         
         # Return data to frontend
         return Response({
@@ -204,7 +207,6 @@ class TestPaymentPage(APIView):
         except Exception as e:
              return Response(str(e), status=500)
 
-        # Create local Order
         order = Order.objects.create(
             user=request.user,
             total_amount=total_amount,
@@ -237,6 +239,6 @@ class TestPaymentPage(APIView):
 class OrderDetailsView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, razorpay_order_id):
-        order = get_object_or_404(Order, razorpay_order_id=razorpay_order_id)
+        order = Order.objects.get(razorpay_order_id=razorpay_order_id)
         serializer = OrderSerializer(order)
         return Response(serializer.data)
