@@ -1,50 +1,105 @@
-# E-commerce App Enhancement Walkthrough
+# Ecommerce Practice API
 
-I have successfully enhanced the e-commerce application with new models, serializers, views, and data population.
+## Authentication
 
-## Changes Verified
-
-### 1. Data Models (`api/models.py`)
-- **User**: Custom user model linked to `settings.AUTH_USER_MODEL`.
-- **Product**: Added `gender` field and linked it to a custom `ProductQuerySet` via `ProductManager` for chainable filtering.
-- **Cart & CartItem**: Implemented cart functionality linked to the user.
-
-### 2. Serializers (`api/serializers.py`)
-- Updated `ProductSerializer` to include new fields.
-- Created `CartSerializer` and `CartItemSerializer` to handle cart operations.
-
-### 3. API Views (`api/views.py`)
-- **ProductListCreate**: Supports rich filtering and sorting:
-    - `gender`: Filter by gender (e.g., `?gender=Men`).
-    - `category`: Filter by category.
-    - `brand`: Filter by brand name.
-    - `min_price` / `max_price`: Filter by price range.
-    - `ordering`: Sort by price (`?ordering=price` or `?ordering=-price`).
-- **CartView**: Handles `GET` (view cart), `POST` (add item/update quantity), and `DELETE` (clear cart).
-
-### 4. Data Population
-- Created and executed a script `populate_data.py` that generated brands and random products.
-
-## Verification Scenarios
-
-### Product Filtering
-Verified that products can be filtered by gender and price range.
-```bash
-curl "http://127.0.0.1:8000/api/products/?gender=Men&price=10&price__lt=100"
+### Register
+**POST** `/register/`
+```json
+{
+    "username": "testuser",
+    "password": "testpassword123",
+    "email": "test@example.com"
+}
 ```
 
-### Cart Operations
-Verified adding items to the cart, retrieving the cart, and emptying the cart using a python script.
+### Login
+**POST** `/login/`
+```json
+{
+    "username": "testuser",
+    "password": "testpassword123"
+}
+```
+*Returns: `access` and `refresh` tokens (if using JWT) or session cookies depending on setup. Assuming session auth for this example given `IsAuthenticated` usage without explicit JWT setup shown in snippets.*
 
-```python
-# snippet from verify_cart.py
-response = requests.post(
-    f'{BASE_URL}/cart/',
-    json={'product_id': product_id, 'quantity': 2},
-    auth=AUTH
-)
+---
+
+## Products
+
+### List Products
+**GET** `/products/`
+**Query Params:**
+- `gender`: Men, Women, Kids, Unisex
+- `category`: topwear, bottomwear, etc.
+- `brand`: Brand Name
+- `min_price`: 10
+- `max_price`: 100
+
+### Get Product Details
+**GET** `/products/<id>/`
+
+---
+
+## Cart
+
+### View Cart
+**GET** `/cart/`
+*Requires Authentication*
+
+### Add to Cart
+**POST** `/cart/`
+*Requires Authentication*
+```json
+{
+    "product_id": 1,
+    "quantity": 2
+}
+```
+*Note: Ensure `product_id` corresponds to an existing product ID.*
+
+### Clear Cart
+**DELETE** `/cart/`
+*Requires Authentication*
+
+---
+
+## Orders
+
+### Create Order / Initialize Payment
+**POST** `/payment-create/`
+*Requires Authentication*
+
+This endpoint initializes a Razorpay order based on the current user's cart total. 
+
+**Request Body:**
+No specific parameters are required in the body as it uses the authenticated user's active cart. You can send an empty JSON object.
+```json
+{}
 ```
 
-## Next Steps
-- You can explore the API using `curl` or Postman.
-- The server is currently running on port 8000.
+**Response:**
+```json
+{
+    "order_id": "order_Kz...",
+    "amount": 5000,
+    "currency": "INR",
+    "key": "rzp_test_...",
+    "prefill": {
+        "name": "testuser",
+        "email": "test@example.com"
+    }
+}
+```
+*Creates a local Order record and returns Razorpay order details used to open the payment modal.*
+
+### Verify Payment
+**POST** `/payment-verify/`
+*Requires Authentication*
+```json
+{
+    "razorpay_order_id": "order_Kz...",
+    "razorpay_payment_id": "pay_Lb...",
+    "razorpay_signature": "e96..."
+}
+```
+*On success, updates Order to `is_paid=True` and clears the Cart.*
